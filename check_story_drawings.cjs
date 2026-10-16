@@ -1,0 +1,5 @@
+const fs=require('fs'),vm=require('vm'),assert=require('assert');
+const sandbox={window:{}};vm.createContext(sandbox);vm.runInContext(fs.readFileSync('dist/jesus-scenes.js','utf8'),sandbox);
+const {scenes,sceneDrawing}=sandbox.window.JesusStory;assert.equal(scenes.length,39);assert.equal(new Set(scenes.map(s=>s.id)).size,39);
+const output=scenes.map(s=>{const points=sceneDrawing(s.id);assert(points.length>1000,s.id+' insufficient outline detail');assert(points.every(p=>Number.isFinite(p.x)&&Number.isFinite(p.y)),s.id+' invalid coordinates');assert(points.every(p=>p.x>-30&&p.x<1030&&p.y>-10&&p.y<710),s.id+' outside illustration area');assert(s.text.length>80);assert(s.url.startsWith('https://www.bibbiaedu.it/CEI2008/nt/'));return{...s,points}});
+const signatures=new Set(output.map(s=>JSON.stringify(s.points)));assert.equal(signatures.size,39,'Every scene needs its own composition');fs.writeFileSync('scene-outlines.json',JSON.stringify(output));console.log('PASS: 39 composizioni distinte, contorni validi, testi e riferimenti presenti.');

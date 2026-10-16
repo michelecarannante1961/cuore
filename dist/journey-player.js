@@ -1,0 +1,32 @@
+(() => {
+ const sections=[...document.querySelectorAll('main>section')];
+ const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
+ const panel=document.createElement('aside');panel.className='journey-player';panel.setAttribute('aria-label','Controlli del racconto automatico');
+ panel.innerHTML='<div class="journey-state" role="status" aria-live="polite">Il racconto avanza da solo</div><div class="journey-controls"><button type="button" data-command="previous" aria-label="Scena precedente">←</button><button type="button" data-command="pause" aria-pressed="false">Ⅱ Pausa</button><button type="button" data-command="next" aria-label="Scena successiva">→</button><button type="button" data-command="restart">↺ Ricomincia</button><label class="journey-speed">Ritmo <select aria-label="Velocità del racconto"><option value="0.75">Lento</option><option value="1" selected>Normale</option><option value="1.35">Veloce</option></select></label></div><div class="journey-time" aria-hidden="true"><span></span></div>';
+ document.body.append(panel);
+ const state=panel.querySelector('.journey-state'),pauseButton=panel.querySelector('[data-command="pause"]'),progress=panel.querySelector('.journey-time span'),speedSelect=panel.querySelector('select');
+ let index=0,playing=true,finished=false,elapsed=0,lastClock=performance.now(),speed=1,phase='enter',startY=scrollY,entryDuration=reduced?0:1700,visibilityResume=false,userMoved=false;
+ const allWords=section=>section.querySelector('.chapter')?.innerText||section.innerText;
+ function duration(section){const words=allWords(section).trim().split(/\s+/).length;return Math.max(10500,Math.min(52000,words/2.6*1000+5000));}
+ function range(section){const article=section.querySelector('.chapter')||section;const rect=article.getBoundingClientRect(),sectionTop=section.getBoundingClientRect().top+scrollY;const top=rect.top+scrollY,bottom=rect.bottom+scrollY,mobile=innerWidth<700,header=mobile?100:80,footer=mobile?155:145;let first=sectionTop,last=sectionTop;
+  if(section.classList.contains('hero')){first=sectionTop;last=sectionTop}
+  else if(section.classList.contains('last')){first=sectionTop;last=Math.max(first,sectionTop+section.offsetHeight-innerHeight+footer)}
+  else {first=Math.max(sectionTop,top-innerHeight*(mobile?.48:.22));last=Math.max(first,bottom-innerHeight+footer);last=Math.min(last,sectionTop+section.offsetHeight-innerHeight*.65);last=Math.max(first,last)}
+  const max=Math.max(0,document.documentElement.scrollHeight-innerHeight);return{first:Math.max(0,Math.min(max,first)),last:Math.max(0,Math.min(max,last))};}
+ function label(){pauseButton.textContent=finished?'↺ Rivedi':playing?'Ⅱ Pausa':'▶ Riprendi';pauseButton.setAttribute('aria-pressed',String(!playing));state.textContent=finished?'Il viaggio si conclude in un solo cuore.':`${playing?'Racconto automatico':'In pausa'} · ${String(index+1).padStart(2,'0')} / ${sections.length}`;document.body.classList.toggle('journey-running',playing);panel.querySelector('[data-command="previous"]').disabled=index===0;panel.querySelector('[data-command="next"]').disabled=index===sections.length-1;}
+ function seek(next,keepPlaying=playing){index=Math.max(0,Math.min(sections.length-1,next));playing=keepPlaying;finished=false;userMoved=false;phase='enter';elapsed=0;startY=scrollY;lastClock=performance.now();label();}
+ function restart(){seek(0,true)}
+ function pause(){playing=false;label()}
+ pauseButton.addEventListener('click',()=>{if(finished){restart();return}if(!playing&&userMoved){let nearest=0,distance=Infinity;sections.forEach((section,i)=>{const r=section.getBoundingClientRect(),d=Math.abs(r.top+r.height/2-innerHeight/2);if(d<distance){distance=d;nearest=i}});seek(nearest,true);return}playing=!playing;if(playing)lastClock=performance.now();label()});
+ panel.querySelector('[data-command="previous"]').addEventListener('click',()=>seek(index-1,true));panel.querySelector('[data-command="next"]').addEventListener('click',()=>seek(index+1,true));panel.querySelector('[data-command="restart"]').addEventListener('click',restart);
+ speedSelect.addEventListener('change',()=>{speed=Number(speedSelect.value);lastClock=performance.now()});
+ function manuallyPause(event){if(event.target?.closest('.journey-player'))return;userMoved=true;pause()}
+ addEventListener('wheel',manuallyPause,{passive:true});addEventListener('touchstart',manuallyPause,{passive:true});
+ addEventListener('keydown',event=>{if(event.target.closest('a,button,select,input,textarea'))return;if(event.code==='Space'){event.preventDefault();pauseButton.click()}else if(['ArrowDown','ArrowUp','PageDown','PageUp','Home','End'].includes(event.key))pause()});
+ document.addEventListener('visibilitychange',()=>{if(document.hidden){visibilityResume=playing;playing=false;label()}else if(visibilityResume){playing=true;visibilityResume=false;lastClock=performance.now();label()}});
+ document.querySelectorAll('a[href^="#"]').forEach(link=>link.addEventListener('click',event=>{const id=link.getAttribute('href').slice(1),next=sections.findIndex(s=>s.id===id);if(next<0)return;event.preventDefault();seek(next,true)}));
+ document.querySelectorAll('a[href^="gesu.html"]').forEach(link=>link.addEventListener('click',event=>{event.preventDefault();seek(10,true)}));
+ function tick(now){const dt=Math.max(0,Math.min(120,now-lastClock));lastClock=now;if(playing){elapsed+=dt*speed;const positions=range(sections[index]);if(phase==='enter'){const q=entryDuration?Math.min(1,elapsed/entryDuration):1;const ease=q*q*(3-2*q);window.scrollTo({top:startY+(positions.first-startY)*ease,behavior:'instant'});if(q>=1){phase='read';elapsed=0}}else{const total=duration(sections[index]),q=Math.min(1,elapsed/total);window.scrollTo({top:positions.first+(positions.last-positions.first)*q,behavior:'instant'});progress.style.width=`${q*100}%`;if(q>=1){if(index<sections.length-1)seek(index+1,true);else{playing=false;finished=true;label()}}}}requestAnimationFrame(tick)}
+ window.journeyPlayer={goTo:next=>seek(next,true),pause,restart,getState:()=>({index,playing,finished,phase,elapsed,total:sections.length})};
+ const hash=decodeURIComponent(location.hash.slice(1));const requested=sections.findIndex(s=>s.id===hash);if(requested>=0)index=requested;label();requestAnimationFrame(tick);
+})();

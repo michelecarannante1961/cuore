@@ -1,0 +1,8 @@
+const fs=require('fs'),vm=require('vm'),assert=require('assert');
+let pending,spoken=[],cancelled=0,gains=[],enabled=true;
+const element=()=>({innerText:'Ogni vita è unica.',classList:{add(){},remove(){}},addEventListener(e,f){this[e]=f},setAttribute(){},getBoundingClientRect(){return{top:10,bottom:100}}});
+const paragraph=element(),button=element(),music=element(),birth=element();
+const sandbox={document:{querySelector:s=>({'#narration':button,'#music':music,'#birth-seed':birth}[s]),querySelectorAll:()=>[paragraph],addEventListener(){}},window:{speechSynthesis:{cancel(){cancelled++},getVoices:()=>[{name:'Elsa',lang:'it-IT'}],speak:u=>spoken.push(u)}},SpeechSynthesisUtterance:function(text){this.text=text},musicOn:true,audio:{currentTime:10},master:{gain:{setTargetAtTime:v=>gains.push(v)}},status(){},toggleAudio:async()=>{},setTimeout:f=>{pending=f;return 1},clearTimeout(){pending=null},addEventListener(){},innerHeight:1000};
+vm.createContext(sandbox);vm.runInContext(fs.readFileSync('dist/narration.js','utf8'),sandbox);
+paragraph.pointerenter({pointerType:'mouse'});assert(pending);pending();assert.equal(spoken.length,1);assert.equal(spoken[0].lang,'it-IT');assert.equal(spoken[0].text,paragraph.innerText);assert.equal(spoken[0].voice.name,'Elsa');assert(gains.includes(.20),'Music ducks under narration');paragraph.pointerleave();assert(cancelled>=2);assert(gains.includes(.65));button.click();paragraph.pointerenter({pointerType:'mouse'});assert.equal(pending,null,'Voice toggle suppresses hover');
+console.log('PASS: lettura su hover, voce italiana, pausa, musica attenuata e interruttore voce.');

@@ -1,0 +1,9 @@
+{
+  "generator": "built-in image_gen",
+  "prompts": {
+    "wheat": "A wide cinematic photograph of a ripe golden wheat field at dusk, close wheat stalks framing edges, dark amber and burgundy atmospheric shadows, distant horizon, poetic human solidarity website background, no people, no text, no tools, realistic fine art, landscape 16:9, subdued exposure, center uncluttered.",
+    "soil": "A wide cinematic photograph of freshly cultivated rich brown earth with furrows, low viewpoint, rural dusk, subtle roots and clods in foreground, poetic human solidarity website background, earthy umber burgundy palette, realistic fine art, landscape 16:9, no text no tools no people, subdued exposure, center uncluttered.",
+    "foundry": "A wide cinematic photograph inside an ancient preindustrial iron foundry, old stone archways, weathered anvil, glowing furnace in background and tiny warm sparks, no modern factory, no people no lettering, deep charcoal and ember orange palette, fine art realistic landscape 16:9, subdued exposure, center uncluttered for website overlay.",
+    "faith": "A wide cinematic fine art photograph of a circle of adult worshippers joining hands in prayer, focus on naturally interlinked human hands of varied ages and skin tones, clothed forearms entering from edges, soft warm light of an old church in distant defocused background, reverent solidarity, anatomically natural hands, no text, no prominent cross, burgundy umber gold palette, landscape 16:9, subdued exposure, center uncluttered for website overlay."
+  }
+}

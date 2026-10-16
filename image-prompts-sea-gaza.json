@@ -1,0 +1,7 @@
+{
+  "generator": "built-in image_gen",
+  "prompts": {
+    "sea": "Wide fine art cinematic photograph of open Mediterranean sea at dusk, gentle deep teal waves with silver gold reflections, distant horizon, sense of shared human journey and rowing, no boats no people no text, moody burgundy sky, peaceful but powerful, 16:9 landscape, cinematic subdued light, uncluttered center for web interface overlay.",
+    "gaza": "Create an explicitly illustrative editorial painting about children living amid the devastation of Gaza, not a documentary photograph. A wide street lined with collapsed concrete apartment buildings, rubble and dust, three living Palestinian children in ordinary modest everyday clothing standing together in the foreground, safe and physically unharmed, holding hands, dignity and quiet resilience. No injuries, no blood, no corpses, no weapons, no explosions, no flags, no text, no recognizable real people. Muted charcoal, dusty sandstone and soft amber palette. Painterly realism with clearly visible brushwork, respectful humanitarian tone. Wide 16:9 landscape with open center and foreground subjects to one side for text and particle overlay."
+  }
+}
