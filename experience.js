@@ -9,7 +9,7 @@ const sections=[...document.querySelectorAll('main section')];
 const finalScene=sections.length-1,gospelStart=10;
 const isGospelScene=()=>Boolean(window.Journey)&&active>=gospelStart&&active<finalScene;
 let projectedPoints=[],connections=[],pointerStart=null;
-const readingParagraphs=[...document.querySelectorAll('main .chapter p, main .last>p, main .hero .intro')];
+const readingParagraphs=[...document.querySelectorAll('main .chapter p, main .last>p')];
 const N=640,mask=document.createElement('canvas');mask.width=mask.height=400;const m=mask.getContext('2d',{willReadFrequently:true});
 function shape(type){m.clearRect(0,0,400,400);m.fillStyle='#fff';m.strokeStyle='#fff';m.lineWidth=22;m.lineCap='round';m.lineJoin='round';m.save();m.translate(200,200);m.scale(140,140);
  const line=(points,width=.14)=>{m.lineWidth=width;m.beginPath();points.forEach(([x,y],i)=>i?m.lineTo(x,y):m.moveTo(x,y));m.stroke()};
