@@ -2,8 +2,8 @@ const {scenes,sceneDrawing}=window.JesusStory;
 const storyCanvas=document.querySelector('#story-canvas'),storyContext=storyCanvas.getContext('2d');
 const storyMain=document.querySelector('#story'),episodeSelect=document.querySelector('#episode');
 const storyReduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
-let storyWidth=innerWidth,storyHeight=innerHeight,storyIndex=-1,storyBlend=1,storyTime=0,storyScrollPending=false,storyFrame=0,storyLastFrame=0;
-let audio=null,musicOn=false,master=null,storyMusicTimer=null,storyChord=0;
+let storyWidth=innerWidth,storyHeight=innerHeight,storyIndex=-1,storyBlend=1,storyScrollPending=false,storyFrame=0,storyLastFrame=0;
+let musicOn=false,claudeFrame=null,claudePopup=null;
 const status=message=>document.querySelector('#interaction-status').textContent=message;
 for(const [i,scene] of scenes.entries()){
  const section=document.createElement('section');section.id=scene.id;section.className='episode';
@@ -13,8 +13,8 @@ for(const [i,scene] of scenes.entries()){
  const paragraph=document.createElement('p');paragraph.textContent=scene.text;
  const reference=document.createElement('a');reference.className='source';reference.href=scene.url;reference.target='_blank';reference.rel='noopener noreferrer';reference.textContent=scene.verse+' ↗';
  article.append(eyebrow,title,paragraph,reference);
- if(i===0){const note=document.createElement('p');note.className='scene-note';note.textContent='Un percorso nei racconti dei Vangeli, con scene simboliche e riferimenti ai brani. Ogni figura nasce dai contorni di piccoli chicchi.';article.append(note)}
- if(i===scenes.length-1){const link=document.createElement('a');link.className='return-link';link.href='index.html#fede';link.textContent='← Torna al melograno';article.append(link)}
+ if(i===0){const note=document.createElement('p');note.className='scene-note';note.textContent='Gli ultimi cinque passi dei racconti evangelici, dal silenzio del sepolcro alla promessa del Risorto. Ogni figura nasce dai contorni di piccoli chicchi.';article.append(note)}
+ if(i===scenes.length-1){const link=document.createElement('a');link.className='return-link';link.href='index.html#rinascita';link.textContent='→ Prosegui verso la conclusione del melograno';article.append(link)}
  section.append(article);storyMain.append(section);
  const option=document.createElement('option');option.value=String(i);option.textContent=`${String(i+1).padStart(2,'0')} · ${scene.title}`;episodeSelect.append(option);
 }
@@ -24,7 +24,7 @@ const storyKernels=Array.from({length:storyCount},(_,i)=>{const a=i*2.399963,r=M
 const sceneCache=new Map();
 let storyProjected=[],storyConnections=[];
 function sampleScene(index){if(sceneCache.has(index))return sceneCache.get(index);const points=sceneDrawing(scenes[index].id);const sampled=Array.from({length:storyCount},(_,i)=>points[Math.min(points.length-1,Math.floor((i+.5)*points.length/storyCount))]);sceneCache.set(index,sampled);return sampled;}
-function selectStory(index){if(index===storyIndex)return;storyIndex=index;storyBlend=0;const target=sampleScene(index);storyKernels.forEach((p,i)=>{p.fromX=p.x;p.fromY=p.y;p.targetX=target[i].x;p.targetY=target[i].y});episodeSelect.value=String(index);document.querySelector('#story-count').textContent=`${String(index+1).padStart(2,'0')} / ${scenes.length}`;document.querySelector('#previous').disabled=index===0;document.querySelector('#next').disabled=index===scenes.length-1;document.querySelector('#story-progress-bar').style.width=`${(index+1)/scenes.length*100}%`;const part=scenes[index].part;document.documentElement.style.setProperty('--glow',part==='La Passione'?'#36212b':part==='La Pasqua'||part==='Gli incontri del Risorto'?'#57432b':'#4b2526');storyConnections=[];if(storyReduced){storyBlend=1;drawStory(0)}}
+function selectStory(index){if(index===storyIndex)return;storyIndex=index;storyBlend=0;const target=sampleScene(index);storyKernels.forEach((p,i)=>{p.fromX=p.x;p.fromY=p.y;p.targetX=target[i].x;p.targetY=target[i].y});episodeSelect.value=String(index);document.querySelector('#story-count').textContent=`${String(index+1).padStart(2,'0')} / ${String(scenes.length).padStart(2,'0')}`;document.querySelector('#previous').disabled=index===0;document.querySelector('#next').disabled=index===scenes.length-1;document.querySelector('#story-progress-bar').style.width=`${(index+1)/scenes.length*100}%`;const part=scenes[index].part;document.documentElement.style.setProperty('--glow',part==='La Passione'?'#36212b':part==='La Pasqua'||part==='Gli incontri del Risorto'?'#57432b':'#4b2526');storyConnections=[];if(storyReduced){storyBlend=1;drawStory(0)}}
 function updateStory(){storyScrollPending=false;let best=Infinity,index=0;for(const [i,section] of episodeSections.entries()){const r=section.getBoundingClientRect(),d=Math.abs(r.top+r.height*.5-storyHeight*.5);if(d<best){best=d;index=i}const p=section.querySelector('p');if(p){const top=p.getBoundingClientRect().top;p.style.setProperty('--approach',String(Math.max(0,Math.min(1,(storyHeight*.92-top)/(storyHeight*.65)))))}}selectStory(index);}
 function resizeStory(){storyWidth=innerWidth;storyHeight=innerHeight;const d=Math.min(devicePixelRatio||1,2);storyCanvas.width=storyWidth*d;storyCanvas.height=storyHeight*d;storyContext.setTransform(d,0,0,d,0,0);if(storyReduced&&storyIndex>=0)drawStory(0)}
 function drawStory(time){if(!storyReduced&&time-storyLastFrame<28){storyFrame=requestAnimationFrame(drawStory);return}const dt=Math.min(60,time-storyLastFrame||33);storyLastFrame=time;storyBlend=Math.min(1,storyBlend+dt/1500);const smooth=storyBlend*storyBlend*(3-2*storyBlend),mobile=storyWidth<801,scale=Math.min((mobile?storyWidth*.97:storyWidth*.57)/1000,storyHeight*(mobile?.50:.80)/700),cx=storyWidth*(mobile?.5:.695),cy=storyHeight*(mobile?.31:.49),t=storyReduced?0:time*.001;
@@ -38,9 +38,45 @@ episodeSelect.addEventListener('change',()=>goToEpisode(Number(episodeSelect.val
 document.querySelector('#previous').addEventListener('click',()=>goToEpisode(storyIndex-1));document.querySelector('#next').addEventListener('click',()=>goToEpisode(storyIndex+1));
 addEventListener('keydown',event=>{if(event.target.closest('input,select,button,a'))return;if(event.key==='ArrowRight'){event.preventDefault();goToEpisode(storyIndex+1)}if(event.key==='ArrowLeft'){event.preventDefault();goToEpisode(storyIndex-1)}});
 addEventListener('scroll',()=>{if(!storyScrollPending){storyScrollPending=true;requestAnimationFrame(updateStory)}},{passive:true});addEventListener('resize',()=>{resizeStory();updateStory()});
-let storyPointer=null;addEventListener('pointerdown',e=>storyPointer={x:e.clientX,y:e.clientY});addEventListener('pointerup',e=>{if(!storyPointer||Math.hypot(e.clientX-storyPointer.x,e.clientY-storyPointer.y)>9)return;storyPointer=null;if(e.target.closest('.chapter,header,button,select,.story-tools'))return;const point=storyProjected.reduce((best,p)=>Math.hypot(p.x-e.clientX,p.y-e.clientY)<Math.hypot(best.x-e.clientX,best.y-e.clientY)?p:best,{x:1e9,y:1e9});if(Math.hypot(point.x-e.clientX,point.y-e.clientY)>12)return;const neighbours=storyProjected.filter(p=>p.index!==point.index).sort((a,b)=>Math.hypot(a.x-point.x,a.y-point.y)-Math.hypot(b.x-point.x,b.y-point.y)).slice(0,5);neighbours.forEach(p=>storyConnections.push({a:point.index,b:p.index,created:performance.now()}));if(storyConnections.length>80)storyConnections=storyConnections.slice(-80);status('Un filo unisce ogni vita a un’altra.');if(storyReduced)drawStory(0)});
-function storyPhrase(){if(!musicOn)return;const chords=[[130.81,196,261.63],[110,164.81,220],[87.31,130.81,174.61],[98,146.83,196]],chord=chords[storyChord++%chords.length];for(const [i,f] of chord.entries()){const osc=audio.createOscillator(),gain=audio.createGain(),at=audio.currentTime+i*.18;osc.type='sine';osc.frequency.value=f;gain.gain.setValueAtTime(.0001,at);gain.gain.exponentialRampToValueAtTime(.055,at+1.6);gain.gain.exponentialRampToValueAtTime(.0001,at+9);osc.connect(gain);gain.connect(master);osc.start(at);osc.stop(at+9.1);osc.onended=()=>{osc.disconnect();gain.disconnect()}}}
-async function toggleAudio(){try{if(!audio){audio=new(window.AudioContext||window.webkitAudioContext)();master=audio.createGain();master.gain.value=0;master.connect(audio.destination)}await audio.resume();musicOn=!musicOn;master.gain.cancelScheduledValues(audio.currentTime);master.gain.setTargetAtTime(musicOn?.65:0,audio.currentTime,.25);if(musicOn){storyPhrase();storyMusicTimer=setInterval(storyPhrase,8000)}else{clearInterval(storyMusicTimer);}const button=document.querySelector('#music');button.textContent=musicOn?'♫ MUSICA · PAUSA':'♫ ATTIVA LA MUSICA';button.setAttribute('aria-pressed',String(musicOn))}catch{status('Audio non disponibile nel browser.')}}
+let storyPointer=null;addEventListener('pointerdown',e=>storyPointer={x:e.clientX,y:e.clientY});addEventListener('pointerup',e=>{if(!storyPointer||Math.hypot(e.clientX-storyPointer.x,e.clientY-storyPointer.y)>9)return;storyPointer=null;if(e.target.closest('.chapter,header,button,select,.story-tools,.claude-fm-panel'))return;const point=storyProjected.reduce((best,p)=>Math.hypot(p.x-e.clientX,p.y-e.clientY)<Math.hypot(best.x-e.clientX,best.y-e.clientY)?p:best,{x:1e9,y:1e9});if(Math.hypot(point.x-e.clientX,point.y-e.clientY)>12)return;const neighbours=storyProjected.filter(p=>p.index!==point.index).sort((a,b)=>Math.hypot(a.x-point.x,a.y-point.y)-Math.hypot(b.x-point.x,b.y-point.y)).slice(0,5);neighbours.forEach(p=>storyConnections.push({a:point.index,b:p.index,created:performance.now()}));if(storyConnections.length>80)storyConnections=storyConnections.slice(-80);status('Un filo unisce ogni vita a un’altra.');if(storyReduced)drawStory(0)});
+const CLAUDE_YT_ID='tRsQsTMvPNg';
+const CLAUDE_YT_URL='https://www.youtube.com/live/tRsQsTMvPNg?si=-0hTu4TocPIPgnqq';
+const CLAUDE_EMBED_URL=`https://www.youtube.com/embed/${CLAUDE_YT_ID}?autoplay=1&playsinline=1&enablejsapi=1&rel=0`;
+const claudePanel=document.querySelector('#claude-fm-panel');
+const claudeMount=document.querySelector('#claude-fm-mount');
+const claudeMinBtn=document.querySelector('#claude-fm-min');
+if(claudeMinBtn&&claudePanel){claudeMinBtn.addEventListener('click',()=>claudePanel.classList.toggle('minimized'))}
+function ytCommand(func){if(claudeFrame&&claudeFrame.contentWindow){claudeFrame.contentWindow.postMessage(JSON.stringify({event:'command',func,args:''}),'*')}}
+function toggleAudio(){
+ musicOn=!musicOn;
+ const isLocalFile=typeof location!=='undefined'&&location.protocol==='file:';
+ if(musicOn){
+  if(isLocalFile){
+   if(claudePanel){claudePanel.classList.add('local-mode');claudePanel.hidden=false}
+   if(typeof window.open==='function'){
+    if(!claudePopup||claudePopup.closed){claudePopup=window.open(CLAUDE_YT_URL,'ClaudeFMLive','popup=yes,width=420,height=260,left=28,top=60')}else{claudePopup.focus()}
+   }
+   status('♫ Claude FM attiva in finestra dedicata.');
+  }else if(claudePanel&&claudeMount){
+   claudePanel.classList.remove('local-mode');
+   claudePanel.hidden=false;
+   if(!claudeFrame){
+    claudeFrame=document.createElement('iframe');
+    claudeFrame.allow='autoplay; encrypted-media; picture-in-picture';
+    claudeFrame.referrerPolicy='strict-origin-when-cross-origin';
+    claudeFrame.title='Claude FM — diretta musicale continua';
+    claudeFrame.src=CLAUDE_EMBED_URL;
+    claudeMount.append(claudeFrame);
+   }else{ytCommand('playVideo')}
+   status('♫ Diretta Claude FM attivata.');
+  }
+ }else{
+  if(claudePopup&&!claudePopup.closed){try{claudePopup.close()}catch{}claudePopup=null}
+  if(claudeFrame)ytCommand('pauseVideo');
+  if(claudePanel)claudePanel.hidden=true;
+ }
+ const button=document.querySelector('#music');button.textContent=musicOn?'♫ MUSICA · PAUSA':'♫ ATTIVA MUSICA · CLAUDE';button.setAttribute('aria-pressed',String(musicOn));
+}
 document.querySelector('#music').addEventListener('click',toggleAudio);
 resizeStory();updateStory();if(!storyReduced)storyFrame=requestAnimationFrame(drawStory);
 const requested=scenes.findIndex(s=>s.id===decodeURIComponent(location.hash.slice(1)));if(requested>=0){episodeSections[requested].scrollIntoView({behavior:'instant',block:'center'});updateStory()}
